@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple To-Do App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .todo-list {
+      list-style: none;
+      padding: 0;
+    }
+    .todo-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      border: 1px solid #ddd;
+      margin-bottom: 5px;
+      border-radius: 4px;
+    }
+    .todo-item span {
+      flex: 1;
+    }
+    button {
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+    }
+    button.delete {
+      background-color: #dc3545;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    #todoForm {
+      display: flex;
+      place-content: center;
+      gap: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>To-Do App</h1>
+  <form id="todoForm">
+    <input type="text" id="todoInput" placeholder="Enter a new to-do" required>
+    <button type="submit">Add</button>
+  </form>
+  <ul class="todo-list" id="todoList"></ul>
+
+  <script>
+    const apiBaseUrl = 'http://localhost:3000/';
+
+    const todoList = document.getElementById('todoList');
+    const todoForm = document.getElementById('todoForm');
+    const todoInput = document.getElementById('todoInput');
+
+    // Fetch all todos
+    async function fetchTodos() {
+      const response = await fetch(apiBaseUrl+'get-todos');
+      const todos = await response.json();
+      renderTodos(todos);
+    }
+
+    // Render todos to the UI
+    function renderTodos(todos) {
+      todoList.innerHTML = '';
+      todos.forEach(todo => {
+        const li = document.createElement('li');
+        li.className = 'todo-item';
+        li.innerHTML = `
+          <span>${todo.title}</span>
+          <button class="delete" onclick="deleteTodo(${todo.id})">Delete</button>
+        `;
+        todoList.appendChild(li);
+      });
+    }
+
+    // Add a new todo
+    todoForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const title = todoInput.value.trim();
+      if (!title) return;
+
+      const response = await fetch(apiBaseUrl+'post-todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      });
+
+      if (response.ok) {
+        todoInput.value = '';
+        fetchTodos();
+      } else {
+        console.error('Failed to add todo');
+      }
+    });
+
+    // Delete a todo
+    async function deleteTodo(id) {
+      const response = await fetch(`${apiBaseUrl+'delete-todos'}/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        fetchTodos();
+      } else {
+        console.error('Failed to delete todo');
+      }
+    }
+
+    // Initial fetch
+    fetchTodos();
+  </script>
+</body>
+</html>
