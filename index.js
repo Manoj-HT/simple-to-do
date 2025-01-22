@@ -20,23 +20,22 @@ const writeTodos = (todos) => {
 
 const execute = {
     '': sendIndex,
-    '/': sendIndex,
-    '/get-todos': getTodos,
-    '/post-todos': postTodos,
-    '/delete-todo': deleteTodo,
+    'get-todos': getTodos,
+    'post-todos': postTodos,
+    'delete-todo': deleteTodo,
 }
 
 const server = http.createServer((req, res) => {
     const { method, url } = req;
-    const func = execute[url]
-    func(req, res);
+    const func = execute[url.split('/')[1]]
     if (func == undefined) {
         res.writeHead(404, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Route not found" }));
     }
+    func(req, res, url);
 });
 
-function sendIndex(req, res) {
+function sendIndex(req, res, url) {
     const filePath = path.join(__dirname, "index.html");
     fs.readFile(filePath, (err, content) => {
         if (err) {
@@ -49,13 +48,13 @@ function sendIndex(req, res) {
     });
 }
 
-function getTodos(req, res) {
+function getTodos(req, res, url) {
     const todos = readTodos();
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(todos));
 }
 
-function postTodos(req, res) {
+function postTodos(req, res, url) {
     let body = "";
     req.on("data", (chunk) => (body += chunk));
     req.on("end", () => {
@@ -76,7 +75,7 @@ function postTodos(req, res) {
     });
 }
 
-function deleteTodo(req, res) {
+function deleteTodo(req, res, url) {
     const id = url.split("/")[2];
     const todos = readTodos();
     const filteredTodos = todos.filter((todo) => todo.id != id);
